@@ -1,12 +1,12 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-from Queue import Queue
+from queue import Queue
 from threading import Thread
 import argparse
 import gzip
 import os.path
 import requests
-import subprocess
+from hashlib import md5
 import sys
 import threading
 import xml.etree.ElementTree as ET
@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--server', help='Comma separated list of Models to download files for (eg. "R620,R720,R730,R730xd")', required=True, metavar='MODELS')
 parser.add_argument('--destination', help='Destination folder for mirrored data, needs to be the webroot for the mirror', required=True, metavar='WEBROOT')
 parser.add_argument('--getcatalog', help='Forces an update to the current Catalog file for the mirror', action='store_true')
+parser.add_argument('--remove-catalog-location', help='Removes the attributes of the Catalog.xml which is hardcoed to "https://downloads.dell.com/". If these remain, some systems fetches files from there instead of the mirror location.', action='store_true')
 parser.add_argument('--onlyfirmware', help='Only downloads files with a BIOS or Firmware category (useful for Lifecycle Controller based updates)', action='store_true')
 parser.add_argument('--threads', default=8, type=int, help='Number of simultaneous threads to download (enter a number only)')
 
@@ -58,7 +59,7 @@ class downloadThread(threading.Thread):
         printColour('\nThread #{0} exiting\n'.format(self.threadNum), colourNumber = 31 + (self.threadNum % 7))
 
 def has_live_threads(threads):
-    return True in [t.isAlive() for t in threads]
+    return True in [t.is_alive() for t in threads]
 
 def printColour(text, colour = None, colourNumber = None):
     if colour == None and colourNumber == None:
@@ -123,10 +124,22 @@ if args.getcatalog or downloadCatalog:
         unzippedOutput.flush()
         unzippedOutput.close()
 
+if args.remove_catalog_location:
+    e = ET.parse(unzippedCatalog)
+    root = e.getroot()
+    for attr in ['baseLocation', 'baseLocationAccessProtocols']:
+        try:
+            del root.attrib[attr]
+        except KeyError as err:
+            printColour('Warning: ', 'red')
+            printColour('Could not find {0} in Catalog.xml. Continue anyway.\n'.format(err), 'yellow')
+    # Here we assume utf-16 encoding as that's what dell currently ships.
+    # Should better check it instead.
+    e.write(unzippedCatalog, encoding="utf-16", xml_declaration=True)
+
 q = Queue(maxsize=0)
 
 e = ET.parse(unzippedCatalog).getroot()
-
 toDownload = []
 serverList = args.server.split(',')
 
@@ -161,8 +174,15 @@ for sb in e.findall('SoftwareBundle'):
                         if os.path.isfile(fileToDownload):
                             needDownload = False
 
-                            output = subprocess.check_output(['md5sum', fileToDownload])
-                            fileHash = output.split(' ')[0]
+                            md5_object = md5()
+                            block_size = 128 * md5_object.block_size
+                            output = open(fileToDownload, 'rb')
+                            chunk = output.read(block_size)
+                            while chunk:
+                                md5_object.update(chunk)
+                                chunk = output.read(block_size)
+
+                            fileHash = md5_object.hexdigest()
                             checkHash = sc.attrib['hashMD5']
 
                             if fileHash.lower() != checkHash.lower():
@@ -207,7 +227,7 @@ for i in range(num_threads):
 
 while has_live_threads(threads):
     try:
-        [t.join(1) for t in threads if t is not None and t.isAlive()]
+        [t.join(1) for t in threads if t is not None and t.is_alive()]
     except KeyboardInterrupt:
         printColour('\nSending kill to threads, you will need to wait for the remaining downloads to finish (the impatient will need to kill from console)....\n', 'yellow')
         for t in threads:
