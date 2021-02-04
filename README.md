@@ -21,7 +21,7 @@ optional arguments:
                         mirror
   --remove-catalog-location
                         Removes the attributes of the Catalog.xml which is
-                        hardcoed to "https://downloads.dell.com/". If these
+                        hardcoded to "https://downloads.dell.com/". If these
                         remain, some systems fetches files from there instead
                         of the mirror location.
   --onlyfirmware        Only downloads files with a BIOS or Firmware category

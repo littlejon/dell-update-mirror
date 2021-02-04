@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--server', help='Comma separated list of Models to download files for (eg. "R620,R720,R730,R730xd")', required=True, metavar='MODELS')
 parser.add_argument('--destination', help='Destination folder for mirrored data, needs to be the webroot for the mirror', required=True, metavar='WEBROOT')
 parser.add_argument('--getcatalog', help='Forces an update to the current Catalog file for the mirror', action='store_true')
-parser.add_argument('--remove-catalog-location', help='Removes the attributes of the Catalog.xml which is hardcoed to "https://downloads.dell.com/". If these remain, some systems fetches files from there instead of the mirror location.', action='store_true')
+parser.add_argument('--remove-catalog-location', help='Removes the attributes of the Catalog.xml which is hardcoded to "https://downloads.dell.com/". If these remain, some systems fetches files from there instead of the mirror location.', action='store_true')
 parser.add_argument('--onlyfirmware', help='Only downloads files with a BIOS or Firmware category (useful for Lifecycle Controller based updates)', action='store_true')
 parser.add_argument('--threads', default=8, type=int, help='Number of simultaneous threads to download (enter a number only)')
 
