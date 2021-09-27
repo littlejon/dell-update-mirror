@@ -108,7 +108,7 @@ if not os.path.exists(unzippedCatalog):
 
 if args.getcatalog or downloadCatalog:
     fileToDownload = '{0}/Catalog/Catalog.xml.gz'.format(args.destination)
-    url = 'http://ftp.dell.com/Catalog/Catalog.xml.gz'
+    url = 'https://downloads.dell.com/Catalog/Catalog.xml.gz'
 
     dirname = os.path.dirname(fileToDownload)
     if not os.path.exists(dirname):
@@ -196,7 +196,7 @@ for sb in e.findall('SoftwareBundle'):
                         printColour('\n')
 
                         if needDownload:
-                            url = 'http://ftp.dell.com/{0}'.format(driverpath)
+                            url = 'https://downloads.dell.com/{0}'.format(driverpath)
 
                             dirname = os.path.dirname(fileToDownload)
                             if not os.path.exists(dirname):
